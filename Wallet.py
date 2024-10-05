@@ -7,8 +7,8 @@ from cryptography.hazmat.backends import default_backend
 class Wallet:
     def __init__(self, private_key=None, public_key=None):
         if private_key and public_key:
-            self.private_key = self.load_private_key(private_key)
-            self.public_key = self.load_public_key(public_key)
+            self.private_key = Wallet.load_private_key(private_key)
+            self.public_key = Wallet.load_public_key(public_key)
             return
 
         # Generating ECDSA keys
@@ -35,14 +35,16 @@ class Wallet:
             encryption_algorithm=serialization.NoEncryption()
         )
 
-    def load_private_key(self, private_key_str):
+    @staticmethod
+    def load_private_key(private_key_str):
         return serialization.load_pem_private_key(
             private_key_str.encode('utf-8'),
             password=None,
             backend=default_backend()
         )
 
-    def load_public_key(self, public_key_str):
+    @staticmethod
+    def load_public_key(public_key_str):
         return serialization.load_pem_public_key(
             public_key_str.encode('utf-8'),
             backend=default_backend()
