@@ -2,6 +2,8 @@ import socket
 import threading
 import json
 import time
+from Blockchain import Blockchain
+from Transaction import Transaction
 
 class Server:
     def __init__(self, p2p_node):
@@ -26,7 +28,7 @@ class Server:
     
     def handle_request(self, client_socket):
         try:
-            data = client_socket.recv(1024).decode('utf-8')
+            data = client_socket.recv(8192).decode('utf-8')
             if not data:
                 return
 
@@ -41,8 +43,21 @@ class Server:
                 self.p2p_node.remove_peer(message['ip_address'], message['port'])
 
             elif message['type'] == 'NEW_PEER':
-                # New peer joined the network, update the list of peers
+                # New peer joined the network, respond with the current chain of blocks
+                response = json.dumps({
+                    'type': 'BLOCKCHAIN',
+                    'blockchain': [block.to_json() for block in self.p2p_node.blockchain.chain]
+                })
+                client_socket.send(response.encode('utf-8'))
                 self.p2p_node.add_peer(message['ip_address'], message['port'])
+            
+            elif message['type'] == 'NEW_TRANSACTION':
+                # Received new transaction
+                transaction = Transaction.from_json(message['transaction'])
+                self.p2p_node.blockchain.add_new_transaction(transaction)
+
+            elif message['type'] == 'BLOCKCHAIN':
+                self.p2p_node.blockchain.compare_replace(message['blockchain'])
 
         except Exception as e:
             print(f"Server encountered an error: {e}")
@@ -73,7 +88,7 @@ class Client:
             client_socket.send(message.encode('utf-8'))
 
             # Receive the list of the known peers
-            data = client_socket.recv(1024).decode('utf-8')
+            data = client_socket.recv(8192).decode('utf-8')
             response = json.loads(data)
             if response['type'] == 'PEERS':
                 self.p2p_node.update_peers(response['peers'])
@@ -83,6 +98,28 @@ class Client:
         finally:
             client_socket.close()
 
+    def request_chain(self, peer_ip_addr, peer_port):
+        try:
+            # Send information about new peer in the network
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect((peer_ip_addr, peer_port))
+            message = json.dumps({'type': 'NEW_PEER', 'ip_address': self.p2p_node.ip_address, 'port': self.p2p_node.port})
+            client_socket.send(message.encode('utf-8'))
+
+            # Receive copy of the blockchain
+            data = client_socket.recv(8192).decode('utf-8')
+            response = json.loads(data)
+            if response['type'] == 'BLOCKCHAIN':
+                client_socket.close()
+                return response['blockchain']
+
+            client_socket.close()
+            return []
+
+        except Exception as e:
+            print(f"Failure when trying to request chain from {peer_ip_addr}:{peer_port}: {e}")
+            return []
+            
     def send_message_to_peer(self, message, peer_ip_addr, peer_port):
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,19 +138,23 @@ class P2PNode:
         self.lock = threading.Lock()
         self.server = Server(self)
         self.client = Client(self)
+        self.blockchain = Blockchain(difficulty = 4, broadcast_cb = self.broadcast_blockchain)
     
     def join_network(self, peer_ip_addr, peer_port):
         with self.lock:
             self.peers[peer_ip_addr] = peer_port
         self.client.request_peers(peer_ip_addr, peer_port)
-        self.broadcast_new_peer()
+        self.connect_and_sync()
     
-    def broadcast_new_peer(self):
-        """ Broadcasts the new peer to the every other peer """
-        message = json.dumps({'type': 'NEW_PEER', 'ip_address': self.ip_address, 'port': self.port})
+    def connect_and_sync(self):
+        """ Broadcasts the new peer to the every other peer and select the longest chain of blocks """
+        self.blockchain.chain = []
         with self.lock:
             for peer_ip_addr, peer_port in self.peers.items():
-                self.client.send_message_to_peer(message, peer_ip_addr, peer_port)
+                peer_chain = self.client.request_chain(peer_ip_addr, peer_port)
+                print(f"{peer_ip_addr} responded with chain: {peer_chain}")
+
+                self.blockchain.compare_replace(peer_chain)
     
     def update_peers(self, peers):
         with self.lock:
@@ -143,30 +184,21 @@ class P2PNode:
 
         self.server.close()
     
-def example():
-    # Creating three nodes for simulation with different host IPs
-    node1 = P2PNode('127.0.0.1', 5000)
-    node2 = P2PNode('127.0.0.2', 5001)
-    node3 = P2PNode('127.0.0.3', 5002)
-
-    # Node2 connects to Node1 and receives the list of peers
-    node2.join_network('127.0.0.1', 5000)
-
-    time.sleep(1)
-
-    # Node3 connects to Node2 and receives the list of peers (which includes Node1)
-    node3.join_network('127.0.0.2', 5001)
-
-    # Simulation delay to allow peer exchange
-    time.sleep(5)
-
-    # Nodes leave the network
-    node2.leave_network()
-
-    time.sleep(1)
-
-    node1.leave_network()
-
-    node3.leave_network()
-
-example()
+    def add_new_transaction(self, transaction):
+        self.blockchain.add_new_transaction(transaction)
+        
+        # Broadcast new transaction
+        message = json.dumps({'type': 'NEW_TRANSACTION', 'transaction': transaction.to_json()})
+        with self.lock:
+            for peer_ip_addr, peer_port in self.peers.items():
+                self.client.send_message_to_peer(message, peer_ip_addr, peer_port)
+    
+    def broadcast_blockchain(self):
+        # Broadcast own blockchain copy
+        message = json.dumps({
+            'type': 'BLOCKCHAIN',
+            'blockchain': [block.to_json() for block in self.blockchain.chain]
+        })
+        with self.lock:
+            for peer_ip_addr, peer_port in self.peers.items():
+                self.client.send_message_to_peer(message, peer_ip_addr, peer_port)

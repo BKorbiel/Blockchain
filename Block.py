@@ -37,6 +37,39 @@ class Block:
         print("Mining finished.")
         return True
 
+    def to_json(self):
+        return {
+            'index': self.index,
+            'previous_hash': self.previous_hash,
+            'timestamp': self.timestamp,
+            'data': [transaction.to_json() for transaction in self.data],
+            'hash': self.hash,
+            'nonce': self.nonce
+        }
+
+    def __str__(self):
+        block_str = f" Index: {self.index} | Previous hash: {self.previous_hash} | Ts: {self.timestamp}\n | PoW: {self.nonce} | Hash: {self.hash}\n"
+        block_str += " Transactions:\n"
+        for i in range(0, len(self.data)):
+            block_str += f"  Transaction #{i}:\n"
+            block_str += str(self.data[i])
+        return block_str
+
+    @staticmethod
+    def from_json(block_json):
+        nonce = block_json.get('nonce', None)
+        hash = block_json.get('hash', None)
+        transactions = [Transaction.from_json(transaction) for transaction in block_json['data']]
+
+        return Block(
+            index = block_json['index'],
+            previous_hash = block_json['previous_hash'],
+            timestamp = block_json['timestamp'],
+            data = transactions,
+            hash = hash,
+            nonce = nonce
+        )
+
     def validate_block(self, previous_block, difficulty):
         if self.previous_hash != previous_block.hash:
             return False
