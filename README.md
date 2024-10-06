@@ -1,12 +1,12 @@
 # Blockchain
 A decentralized blockchain system implemented in Python.
-Work in Progress
+Work in progress.
 
 ## Table of Contents
-* [General Info](#general-information)
+* [General Information](#general-information)
 * [Network Architecture](#network-architecture)
 * [Workflow](#workflow)
-* [Future Improvements](#future-improvements)
+* [Future Improvements Ideas](#future-improvements-ideas)
 
 ## General Information
 This project implements a simplified blockchain from scratch in Python. The blockchain includes essential features like transaction validation, proof of work (PoW), and peer-to-peer (P2P) networking. 
