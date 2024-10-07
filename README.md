@@ -7,6 +7,7 @@ Work in Progress
 * [Network Architecture](#network-architecture)
 * [Workflow](#workflow)
 * [Future Improvements](#future-improvements)
+* [Setup](#setup)
 
 ## General Information
 This project implements a simplified blockchain from scratch in Python. The blockchain includes essential features like transaction validation, proof of work (PoW), and peer-to-peer (P2P) networking. 
@@ -64,3 +65,16 @@ At present, blocks can only store transactions. It may be worth considering allo
 
 #### Graphical User Interface (GUI)
 Currently, the program is only operated through the console. A GUI could be developed to allow users to visualize the current blockchain and to create new transactions more easily.
+
+#### Unit tests
+The project is not covered by any tests, so it would be worthwhile to consider adding unit tests to increase robustness and identify potential bugs.
+
+## Setup
+The only requirement to run the program is the cryptography library, which can be installed using pip with the command `pip install cryptography`.
+To start the program, navigate to the repository and run `python \.Main.py`. 
+
+The program will then begin the blockchain setup process. You will need to provide your IP address and the port on which the server part of the node will run. If the network already exists (meaning you are not the first node in the blockchain), you will also need to provide the IP address and port of any existing node to connect to the network.
+
+Next, the program will ask if you already have your encryption keys. If you do, simply paste them according to the instructions; if not, the program will generate new keys for you.
+
+After that, a menu will be displayed with three options to choose from: view the current chain, create a new transaction, or exit the program.
