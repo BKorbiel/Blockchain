@@ -78,3 +78,6 @@ The program will then begin the blockchain setup process. You will need to provi
 Next, the program will ask if you already have your encryption keys. If you do, simply paste them according to the instructions; if not, the program will generate new keys for you.
 
 After that, a menu will be displayed with three options to choose from: view the current chain, create a new transaction, or exit the program.
+
+
+You can also run a simple example of the program by executing the command `python .\Example.py`. This script will create three nodes on different loopback IP addresses, which will form a P2P blockchain network and generate a few transactions and blocks to demonstrate the functionality.
