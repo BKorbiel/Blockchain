@@ -81,3 +81,6 @@ After that, a menu will be displayed with three options to choose from: view the
 
 
 You can also run a simple example of the program by executing the command `python .\Example.py`. This script will create three nodes on different loopback IP addresses, which will form a P2P blockchain network and generate a few transactions and blocks to demonstrate the functionality.
+
+#### Tests
+To run the unit tests simply execute `python -m unittest discover -s tests` 
