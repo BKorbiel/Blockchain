@@ -66,9 +66,6 @@ At present, blocks can only store transactions. It may be worth considering allo
 #### Graphical User Interface (GUI)
 Currently, the program is only operated through the console. A GUI could be developed to allow users to visualize the current blockchain and to create new transactions more easily.
 
-#### Unit tests
-The project is not covered by any tests, so it would be worthwhile to consider adding unit tests to increase robustness and identify potential bugs.
-
 ## Setup
 The only requirement to run the program is the cryptography library, which can be installed using pip with the command `pip install cryptography`.
 To start the program, navigate to the repository and run `python \.Main.py`. 
