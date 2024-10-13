@@ -54,9 +54,8 @@ class Blockchain:
                         data=self.mempool.copy()
                     )
                     print("Created new block. Mining it...")
-                    self.currently_mined_block = new_block  # Ustaw blok jako aktualnie kopany
+                    self.currently_mined_block = new_block
 
-                    # Rozpocznij kopanie w osobnym wątku
                     mining_thread = threading.Thread(target=self.start_mining, args=(new_block,))
                     mining_thread.start()
         else:
@@ -67,6 +66,7 @@ class Blockchain:
             with self.lock:
                 if not new_block.validate_block(self.chain[-1], self.difficulty):
                     print("Mined block is not valid")
+                    self.currently_mined_block = None
                     return
 
                 for tx in new_block.data:
